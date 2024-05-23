@@ -27,7 +27,8 @@ const APT_AMOUNT = 100_000; // in octas (1 APT = 100_000_000 octas)
 function isHexInput(value: string | undefined): value is string {
     return typeof value === 'string';
 }
-  
+
+// TODO: Error handling for 1) out of gas 2) out of fund 3) network error  
 async function main() {
     if (!isHexInput(process.env.ADMIN_PRIVATE_KEY)) {
         throw new Error("ADMIN_PRIVATE_KEY is not defined or not a valid HexInput");
@@ -64,9 +65,16 @@ async function main() {
     aptos.transaction.batch.on(TransactionWorkerEventsEnum.TransactionSent, async (data) => {
         console.log("message:", data.message);
         // console.log("transaction hash:", data.transactionHash);
-      });
-    
-      aptos.transaction.batch.on(TransactionWorkerEventsEnum.ExecutionFinish, async (data) => {
+    });
+    aptos.transaction.batch.on(TransactionWorkerEventsEnum.TransactionSendFailed, async (data) => {
+        // log event output
+        console.log(data.message);
+    });
+    aptos.transaction.batch.on(TransactionWorkerEventsEnum.TransactionExecutionFailed, async (data) => {
+        // log event output
+        console.log(data.message);
+    });
+    aptos.transaction.batch.on(TransactionWorkerEventsEnum.ExecutionFinish, async (data) => {
         // log event output
         console.log(data.message);
     
@@ -77,7 +85,7 @@ async function main() {
         // worker finished execution, we can now unsubscribe from event listeners
         aptos.transaction.batch.removeAllListeners();
         process.exit(0);
-      });
+    });
 }
 
 main();
